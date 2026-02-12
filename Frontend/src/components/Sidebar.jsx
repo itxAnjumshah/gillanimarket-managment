@@ -8,7 +8,8 @@ import {
   Upload,
   FileText,
   Receipt,
-  X
+  X,
+  User
 } from 'lucide-react'
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -26,6 +27,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const userLinks = [
     { to: '/user/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/user/profile', icon: User, label: 'My Profile' },
     { to: '/user/bill', icon: Receipt, label: 'View Bill' },
     { to: '/user/upload-receipt', icon: Upload, label: 'Upload Receipt' },
     { to: '/user/payment-history', icon: History, label: 'Payment History' }

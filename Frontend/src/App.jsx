@@ -12,6 +12,7 @@ import PaymentHistory from './pages/PaymentHistory'
 import UploadReceipt from './pages/UploadReceipt'
 import BillView from './pages/BillView'
 import Reports from './pages/Reports'
+import UserProfile from './pages/UserProfile'
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
             {/* User Routes */}
             <Route path="/user" element={<PrivateRoute allowedRoles={['user']} />}>
               <Route path="dashboard" element={<UserDashboard />} />
+              <Route path="profile" element={<UserProfile />} />
               <Route path="bill" element={<BillView />} />
               <Route path="upload-receipt" element={<UploadReceipt />} />
               <Route path="payment-history" element={<PaymentHistory />} />

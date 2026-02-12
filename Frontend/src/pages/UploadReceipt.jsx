@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Upload, X, CheckCircle, AlertCircle, FileText } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { paymentAPI } from '../utils/api'
 
 const UploadReceipt = () => {
   const { user } = useAuth()
@@ -65,31 +66,36 @@ const UploadReceipt = () => {
       return
     }
 
-    setLoading(true)
+    try {
+      setLoading(true)
 
-    // Simulate upload
-    await new Promise(resolve => setTimeout(resolve, 2000))
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('receipt', selectedFile)
+      formData.append('month', month)
+      formData.append('amount', amount)
+      formData.append('notes', notes)
 
-    console.log('Receipt upload:', {
-      file: selectedFile.name,
-      month,
-      amount,
-      notes,
-      userId: user?.id
-    })
+      // Upload receipt
+      await paymentAPI.uploadReceipt(formData)
 
-    setLoading(false)
-    setSuccess(true)
+      setSuccess(true)
 
-    // Reset form
-    setTimeout(() => {
-      setSelectedFile(null)
-      setPreviewUrl(null)
-      setMonth('')
-      setAmount('')
-      setNotes('')
-      setSuccess(false)
-    }, 3000)
+      // Reset form
+      setTimeout(() => {
+        setSelectedFile(null)
+        setPreviewUrl(null)
+        setMonth('')
+        setAmount('')
+        setNotes('')
+        setSuccess(false)
+      }, 3000)
+    } catch (error) {
+      console.error('Error uploading receipt:', error)
+      setError(error.response?.data?.message || 'Failed to upload receipt')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const currentYear = new Date().getFullYear()
