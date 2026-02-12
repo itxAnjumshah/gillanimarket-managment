@@ -16,13 +16,12 @@ const getArg = (name) => process.argv.includes(name);
 const run = async () => {
   const connected = await connectDB();
   if (!connected) {
-    console.error('❌ Seeder aborted: database is not connected.');
+    console.error('Seeder aborted: database is not connected.');
     process.exit(1);
   }
 
   if (getArg('--destroy')) {
     await User.deleteMany({});
-    console.log('✅ Deleted all users.');
     await mongoose.connection.close(false);
     process.exit(0);
   }
@@ -36,9 +35,7 @@ const run = async () => {
   const adminDueDate = Number(process.env.SEED_ADMIN_DUE_DATE || 5);
 
   const existing = await User.findOne({ email: adminEmail });
-  if (existing) {
-    console.log(`ℹ️  Admin already exists: ${adminEmail}`);
-  } else {
+  if (!existing) {
     await User.create({
       name: adminName,
       email: adminEmail,
@@ -50,9 +47,6 @@ const run = async () => {
       role: 'admin',
       status: 'active'
     });
-
-    console.log(`✅ Admin created: ${adminEmail}`);
-    console.log('⚠️  Change the default password after first login.');
   }
 
   await mongoose.connection.close(false);
@@ -60,7 +54,7 @@ const run = async () => {
 };
 
 run().catch(async (err) => {
-  console.error('❌ Seeder failed:', err?.message || err);
+  console.error('Seeder failed:', err?.message || err);
   try {
     await mongoose.connection.close(false);
   } catch (_) {}

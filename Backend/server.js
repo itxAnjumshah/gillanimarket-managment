@@ -12,6 +12,7 @@ const cors = require('cors');
 const connectDB = require('./config/database');
 
 // Import routes
+const indexRoutes = require('./routes/indexRoutes');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const rentRoutes = require('./routes/rentRoutes');
@@ -23,9 +24,6 @@ const paymentRoutes = require('./routes/paymentRoutes');
 
 // Create Express application
 const app = express();
-
-// Connect to MongoDB database
-connectDB();
 
 // ============================================
 // MIDDLEWARE
@@ -43,30 +41,12 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files (uploaded receipts)
 app.use('/uploads', express.static('uploads'));
 
-// Log all requests (helpful for debugging)
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
-  next();
-});
-
 // ============================================
 // ROUTES
 // ============================================
 
-// Welcome route
-app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Welcome to Shop Rent Management API',
-    version: '1.0.0',
-    endpoints: {
-      auth: '/api/auth',
-      users: '/api/users',
-      rent: '/api/rent',
-      payments: '/api/payments'
-    }
-  });
-});
+// Root/welcome route
+app.use('/', indexRoutes);
 
 // Mount API routes
 app.use('/api/auth', authRoutes);         // Authentication routes
@@ -100,6 +80,8 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
+// Start server immediately so it doesn't appear stuck; connect DB in background
 app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
+  connectDB();
 });
