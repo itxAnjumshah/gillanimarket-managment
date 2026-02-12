@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FileText, Download, Filter, Calendar } from 'lucide-react'
 import {
   BarChart,
@@ -15,12 +15,44 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts'
-import { getStatistics, mockPayments, mockUsers } from '../utils/mockData'
+import { paymentAPI, rentAPI, userAPI } from '../utils/api'
 
 const Reports = () => {
   const [reportType, setReportType] = useState('overview')
   const [dateRange, setDateRange] = useState('month')
-  const stats = getStatistics()
+  const [stats, setStats] = useState({
+    totalPaid: 0,
+    totalDue: 0,
+    paidCount: 0,
+    pendingCount: 0,
+    overdueCount: 0
+  })
+  const [payments, setPayments] = useState([])
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchReportData()
+  }, [])
+
+  const fetchReportData = async () => {
+    try {
+      setLoading(true)
+      const [paymentStatsRes, paymentsRes, usersRes] = await Promise.all([
+        paymentAPI.getPaymentStats(),
+        paymentAPI.getAllPayments(),
+        userAPI.getAllUsers()
+      ])
+
+      setStats(paymentStatsRes.data.data)
+      setPayments(paymentsRes.data.data.payments || [])
+      setUsers(usersRes.data.data.users || [])
+    } catch (error) {
+      console.error('Error fetching report data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -47,9 +79,9 @@ const Reports = () => {
   ]
 
   // Top users by payment
-  const topUsers = mockUsers
+  const topUsers = users
     .map(user => {
-      const userPayments = mockPayments.filter(p => p.userId === user.id && p.status === 'paid')
+      const userPayments = payments.filter(p => p.user?._id === user._id && p.status === 'paid')
       const totalPaid = userPayments.reduce((sum, p) => sum + p.amount, 0)
       return { ...user, totalPaid }
     })
@@ -57,12 +89,20 @@ const Reports = () => {
     .slice(0, 5)
 
   // Defaulters list
-  const defaulters = mockPayments
+  const defaulters = payments
     .filter(p => p.status === 'overdue')
     .map(p => ({
       ...p,
-      user: mockUsers.find(u => u.id === p.userId)
+      user: users.find(u => u._id === p.user?._id)
     }))
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-12 text-gray-500">Loading report data...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -143,7 +183,7 @@ const Reports = () => {
         <div className="card p-6">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Collection Rate</p>
           <p className="text-2xl font-bold mb-2">
-            {((stats.paidCount / mockPayments.length) * 100).toFixed(1)}%
+            {payments.length > 0 ? ((stats.paidCount / payments.length) * 100).toFixed(1) : 0}%
           </p>
           <p className="text-xs text-green-600">↑ 3.2% from last month</p>
         </div>
@@ -264,12 +304,14 @@ const Reports = () => {
             ) : (
               defaulters.map((payment) => (
                 <div
-                  key={payment.id}
+                  key={payment._id}
                   className="flex items-center justify-between p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
                 >
                   <div>
-                    <p className="font-medium">{payment.shopName}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{payment.month}</p>
+                    <p className="font-medium">{payment.user?.shopName || 'Unknown Shop'}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {payment.month || new Date(payment.createdAt).toLocaleDateString()}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-red-600">{formatCurrency(payment.amount)}</p>
@@ -298,16 +340,17 @@ const Reports = () => {
               </tr>
             </thead>
             <tbody>
-              {mockUsers.map((user) => {
-                const userPaidPayments = mockPayments.filter(p => p.userId === user.id && p.status === 'paid')
-                const userDuePayments = mockPayments.filter(p => p.userId === user.id && p.status !== 'paid')
+              {users.map((user) => {
+                const userPaidPayments = payments.filter(p => p.user?._id === user._id && p.status === 'paid')
+                const userDuePayments = payments.filter(p => p.user?._id === user._id && p.status !== 'paid')
                 const totalPaid = userPaidPayments.reduce((sum, p) => sum + p.amount, 0)
                 const totalDue = userDuePayments.reduce((sum, p) => sum + p.amount, 0)
-                const performance = (userPaidPayments.length / mockPayments.filter(p => p.userId === user.id).length) * 100
+                const userPaymentsTotal = payments.filter(p => p.user?._id === user._id).length
+                const performance = userPaymentsTotal > 0 ? (userPaidPayments.length / userPaymentsTotal) * 100 : 0
 
                 return (
                   <tr
-                    key={user.id}
+                    key={user._id}
                     className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   >
                     <td className="py-3 px-4">

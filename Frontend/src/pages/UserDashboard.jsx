@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -9,19 +10,36 @@ import {
   Calendar
 } from 'lucide-react'
 import StatCard from '../components/StatCard'
-import { mockPayments } from '../utils/mockData'
+import { paymentAPI } from '../utils/api'
 
 const UserDashboard = () => {
   const { user } = useAuth()
+  const [payments, setPayments] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  // Mock user-specific data
-  const monthlyRent = 1500
-  const userPayments = mockPayments.filter(p => p.userId === '2') // Mock user payments
+  useEffect(() => {
+    if (user?.id) {
+      fetchPayments()
+    }
+  }, [user])
 
-  const paidPayments = userPayments.filter(p => p.status === 'paid')
+  const fetchPayments = async () => {
+    try {
+      setLoading(true)
+      const response = await paymentAPI.getPaymentsByUser(user.id)
+      setPayments(response.data.data.payments || [])
+    } catch (error) {
+      console.error('Error fetching payments:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const monthlyRent = user?.monthlyRent || 0
+  const paidPayments = payments.filter(p => p.status === 'paid')
   const totalPaid = paidPayments.reduce((sum, p) => sum + p.amount, 0)
 
-  const pendingPayments = userPayments.filter(p => p.status === 'pending' || p.status === 'overdue')
+  const pendingPayments = payments.filter(p => p.status === 'pending' || p.status === 'overdue')
   const totalDue = pendingPayments.reduce((sum, p) => sum + p.amount, 0)
 
   const formatCurrency = (amount) => {
@@ -128,66 +146,74 @@ const UserDashboard = () => {
       <div className="card p-6">
         <h3 className="text-lg font-semibold mb-6">Payment Status</h3>
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-800">
-                <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">
-                  Month
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">
-                  Amount
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">
-                  Due Date
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">
-                  Status
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {userPayments.map((payment) => (
-                <tr
-                  key={payment.id}
-                  className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                >
-                  <td className="py-3 px-4 font-medium">{payment.month}</td>
-                  <td className="py-3 px-4 font-semibold">{formatCurrency(payment.amount)}</td>
-                  <td className="py-3 px-4 text-sm">
-                    {payment.month.split(' ')[0]} 5, {payment.month.split(' ')[1]}
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
-                      {payment.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    {payment.status !== 'paid' && (
-                      <Link
-                        to="/user/payment"
-                        className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-                      >
-                        Pay Now →
-                      </Link>
-                    )}
-                    {payment.status === 'paid' && payment.receiptUrl && (
-                      <a
-                        href={payment.receiptUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                      >
-                        View Receipt
-                      </a>
-                    )}
-                  </td>
+          {loading ? (
+            <div className="text-center py-8 text-gray-500">Loading payments...</div>
+          ) : payments.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No payments yet</div>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-800">
+                  <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">
+                    Month
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">
+                    Amount
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">
+                    Due Date
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">
+                    Status
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">
+                    Action
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {payments.map((payment) => (
+                  <tr
+                    key={payment._id}
+                    className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  >
+                    <td className="py-3 px-4 font-medium">
+                      {payment.month || `${new Date(payment.createdAt).toLocaleString('default', { month: 'long' })} ${new Date(payment.createdAt).getFullYear()}`}
+                    </td>
+                    <td className="py-3 px-4 font-semibold">{formatCurrency(payment.amount)}</td>
+                    <td className="py-3 px-4 text-sm">
+                      {payment.dueDate ? new Date(payment.dueDate).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
+                        {payment.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      {payment.status !== 'paid' && (
+                        <Link
+                          to="/user/upload-receipt"
+                          className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                        >
+                          Pay Now →
+                        </Link>
+                      )}
+                      {payment.status === 'paid' && payment.receiptUrl && (
+                        <a
+                          href={payment.receiptUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                        >
+                          View Receipt
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

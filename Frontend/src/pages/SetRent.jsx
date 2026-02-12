@@ -1,16 +1,35 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DollarSign, Search, Edit2, CheckCircle, AlertCircle } from 'lucide-react'
-import { mockUsers } from '../utils/mockData'
+import { userAPI, rentAPI } from '../utils/api'
 
 const SetRent = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedUser, setSelectedUser] = useState(null)
   const [newRent, setNewRent] = useState('')
   const [loading, setLoading] = useState(false)
+  const [fetchingUsers, setFetchingUsers] = useState(true)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [users, setUsers] = useState([])
 
-  const filteredUsers = mockUsers.filter(user =>
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const fetchUsers = async () => {
+    try {
+      setFetchingUsers(true)
+      const response = await userAPI.getAllUsers()
+      setUsers(response.data.data.users || [])
+    } catch (error) {
+      console.error('Error fetching users:', error)
+      setError('Failed to fetch users')
+    } finally {
+      setFetchingUsers(false)
+    }
+  }
+
+  const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.shopName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -32,23 +51,32 @@ const SetRent = () => {
     setLoading(true)
     setError('')
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    try {
+      await userAPI.updateUser(selectedUser._id, {
+        monthlyRent: parseFloat(newRent)
+      })
+      
+      setSuccess(true)
 
-    console.log('Updated rent for user:', selectedUser.id, 'New rent:', newRent)
+      // Update the local user's rent
+      setUsers(users.map(u => 
+        u._id === selectedUser._id 
+          ? { ...u, monthlyRent: parseFloat(newRent) } 
+          : u
+      ))
 
-    setLoading(false)
-    setSuccess(true)
-
-    // Update the selected user's rent in the UI
-    selectedUser.monthlyRent = parseFloat(newRent)
-
-    // Reset after 3 seconds
-    setTimeout(() => {
-      setSuccess(false)
-      setSelectedUser(null)
-      setNewRent('')
-    }, 2000)
+      // Reset after 2 seconds
+      setTimeout(() => {
+        setSuccess(false)
+        setSelectedUser(null)
+        setNewRent('')
+      }, 2000)
+    } catch (error) {
+      console.error('Error updating rent:', error)
+      setError(error.response?.data?.message || 'Failed to update rent')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const formatCurrency = (amount) => {
@@ -86,17 +114,21 @@ const SetRent = () => {
           </div>
 
           <div className="space-y-2 max-h-[600px] overflow-y-auto">
-            {filteredUsers.length === 0 ? (
+            {fetchingUsers ? (
+              <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                Loading users...
+              </p>
+            ) : filteredUsers.length === 0 ? (
               <p className="text-center text-gray-500 dark:text-gray-400 py-8">
                 No users found
               </p>
             ) : (
               filteredUsers.map(user => (
                 <div
-                  key={user.id}
+                  key={user._id}
                   onClick={() => handleSelectUser(user)}
                   className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    selectedUser?.id === user.id
+                    selectedUser?._id === user._id
                       ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
                       : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                   }`}

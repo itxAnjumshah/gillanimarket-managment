@@ -1,36 +1,61 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Search, Download, Eye, Filter } from 'lucide-react'
-import { mockPayments } from '../utils/mockData'
+import { paymentAPI } from '../utils/api'
 
 const PaymentHistory = () => {
   const { user, isAdmin } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
+  const [payments, setPayments] = useState([])
+  const [totalPayments, setTotalPayments] = useState(0)
+  const [loading, setLoading] = useState(true)
   const itemsPerPage = 10
 
-  // Filter payments based on user role
-  const allPayments = isAdmin
-    ? mockPayments
-    : mockPayments.filter(p => p.userId === user?.id || p.userId === '2')
+  useEffect(() => {
+    fetchPayments()
+  }, [currentPage, statusFilter, user])
 
-  // Apply filters
-  const filteredPayments = allPayments.filter(payment => {
-    const matchesSearch =
-      payment.shopName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const fetchPayments = async () => {
+    try {
+      setLoading(true)
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+        status: statusFilter !== 'all' ? statusFilter : undefined
+      }
 
-    const matchesStatus = statusFilter === 'all' || payment.status === statusFilter
+      let response
+      if (isAdmin) {
+        response = await paymentAPI.getAllPayments(params)
+      } else {
+        response = await paymentAPI.getPaymentsByUser(user?.id)
+      }
 
-    return matchesSearch && matchesStatus
+      setPayments(response.data.data.payments || [])
+      setTotalPayments(response.data.data.total || 0)
+    } catch (error) {
+      console.error('Error fetching payments:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Apply search filter on client side
+  const filteredPayments = payments.filter(payment => {
+    if (!searchTerm) return true
+    
+    const searchLower = searchTerm.toLowerCase()
+    return (
+      payment.user?.shopName?.toLowerCase().includes(searchLower) ||
+      payment.user?.name?.toLowerCase().includes(searchLower) ||
+      payment._id?.toLowerCase().includes(searchLower)
+    )
   })
 
   // Pagination
-  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedPayments = filteredPayments.slice(startIndex, startIndex + itemsPerPage)
+  const totalPages = Math.ceil(totalPayments / itemsPerPage)
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -130,7 +155,7 @@ const PaymentHistory = () => {
       <div className="card p-6">
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredPayments.length)} of {filteredPayments.length} payments
+            {loading ? 'Loading...' : `Showing ${filteredPayments.length} of ${totalPayments} payments`}
           </p>
           <button className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center space-x-2">
             <Download className="w-4 h-4" />
@@ -139,7 +164,10 @@ const PaymentHistory = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
+          {loading ? (
+            <div className="text-center py-12 text-gray-500">Loading payments...</div>
+          ) : (
+            <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-800">
                 <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">
@@ -171,37 +199,43 @@ const PaymentHistory = () => {
               </tr>
             </thead>
             <tbody>
-              {paginatedPayments.length === 0 ? (
+              {filteredPayments.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="text-center py-12 text-gray-500 dark:text-gray-400">
                     No payments found
                   </td>
                 </tr>
               ) : (
-                paginatedPayments.map((payment) => (
+                filteredPayments.map((payment) => (
                   <tr
-                    key={payment.id}
+                    key={payment._id}
                     className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   >
                     <td className="py-3 px-4">
-                      <span className="font-mono text-sm">{payment.id}</span>
+                      <span className="font-mono text-sm">
+                        {payment._id?.slice(-6) || 'N/A'}
+                      </span>
                     </td>
                     {isAdmin && (
                       <td className="py-3 px-4">
                         <div>
-                          <p className="font-medium">{payment.shopName}</p>
+                          <p className="font-medium">
+                            {payment.user?.shopName || 'N/A'}
+                          </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {payment.userName}
+                            {payment.user?.name || 'Unknown'}
                           </p>
                         </div>
                       </td>
                     )}
-                    <td className="py-3 px-4">{payment.month}</td>
+                    <td className="py-3 px-4">
+                      {payment.month || `${new Date(payment.createdAt).toLocaleString('default', { month: 'long' })} ${new Date(payment.createdAt).getFullYear()}`}
+                    </td>
                     <td className="py-3 px-4 font-semibold">
                       {formatCurrency(payment.amount)}
                     </td>
                     <td className="py-3 px-4 text-sm">
-                      {payment.date || '-'}
+                      {payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString() : '-'}
                     </td>
                     <td className="py-3 px-4">
                       {getMethodBadge(payment.method)}
@@ -213,7 +247,10 @@ const PaymentHistory = () => {
                     </td>
                     <td className="py-3 px-4">
                       {payment.receiptUrl ? (
-                        <button className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center space-x-1">
+                        <button 
+                          onClick={() => window.open(payment.receiptUrl, '_blank')}
+                          className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center space-x-1"
+                        >
                           <Eye className="w-4 h-4" />
                           <span>View</span>
                         </button>
@@ -226,6 +263,7 @@ const PaymentHistory = () => {
               )}
             </tbody>
           </table>
+          )}
         </div>
 
         {/* Pagination */}
