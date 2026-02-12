@@ -13,20 +13,29 @@ const User = require('../models/User');
  */
 exports.getAllPayments = async (req, res) => {
   try {
-    const { status, month } = req.query;
+    const { status, month, page = 1, limit = 10 } = req.query;
 
     // Build query
     let query = {};
-    if (status) query.status = status;
+    if (status && status !== 'all') query.status = status;
     if (month) query.month = month;
 
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const total = await Payment.countDocuments(query);
+
     const payments = await Payment.find(query)
-      .populate('user', 'name email shopName')
-      .sort({ paymentDate: -1 });
+      .populate('user', 'name email shopName phone monthlyRent')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
 
     res.status(200).json({
       success: true,
       count: payments.length,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / parseInt(limit)),
       data: payments
     });
   } catch (error) {
@@ -55,8 +64,8 @@ exports.getPaymentsByUser = async (req, res) => {
     }
 
     const payments = await Payment.find({ user: userId })
-      .populate('user', 'name email shopName')
-      .sort({ paymentDate: -1 });
+      .populate('user', 'name email shopName phone monthlyRent')
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,

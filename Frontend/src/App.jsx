@@ -13,6 +13,7 @@ import UploadReceipt from './pages/UploadReceipt'
 import BillView from './pages/BillView'
 import Reports from './pages/Reports'
 import UserProfile from './pages/UserProfile'
+import Analytics from './pages/Analytics'
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
               <Route path="add-user" element={<AddUser />} />
               <Route path="manage-users" element={<ManageUsers />} />
               <Route path="set-rent" element={<SetRent />} />
+              <Route path="analytics" element={<Analytics />} />
               <Route path="reports" element={<Reports />} />
               <Route path="payment-history" element={<PaymentHistory />} />
             </Route>

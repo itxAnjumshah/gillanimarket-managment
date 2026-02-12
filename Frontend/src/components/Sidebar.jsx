@@ -9,7 +9,8 @@ import {
   FileText,
   Receipt,
   X,
-  User
+  User,
+  BarChart3
 } from 'lucide-react'
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -21,6 +22,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { to: '/admin/add-user', icon: Users, label: 'Add User' },
     { to: '/admin/manage-users', icon: Users, label: 'Manage Users' },
     { to: '/admin/set-rent', icon: DollarSign, label: 'Set Monthly Rent' },
+    { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
     { to: '/admin/payment-history', icon: History, label: 'Payment History' },
     { to: '/admin/reports', icon: FileText, label: 'Reports' }
   ]

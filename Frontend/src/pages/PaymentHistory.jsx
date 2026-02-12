@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { Search, Download, Eye, Filter } from 'lucide-react'
+import { Search, Download, Eye, Filter, CheckCircle, XCircle } from 'lucide-react'
 import { paymentAPI } from '../utils/api'
 
 const PaymentHistory = () => {
@@ -11,6 +11,7 @@ const PaymentHistory = () => {
   const [payments, setPayments] = useState([])
   const [totalPayments, setTotalPayments] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [verifyingId, setVerifyingId] = useState(null)
   const itemsPerPage = 10
 
   useEffect(() => {
@@ -35,11 +36,26 @@ const PaymentHistory = () => {
 
       console.log('Payment Response:', response.data)
       setPayments(response.data.data || [])
-      setTotalPayments(response.data.count || 0)
+      setTotalPayments(response.data.total || response.data.count || 0)
     } catch (error) {
       console.error('Error fetching payments:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleVerifyPayment = async (paymentId, status) => {
+    try {
+      setVerifyingId(paymentId)
+      await paymentAPI.verifyPayment(paymentId, status)
+      // Refresh payments
+      await fetchPayments()
+      alert(`Payment ${status} successfully!`)
+    } catch (error) {
+      console.error('Error verifying payment:', error)
+      alert(error.response?.data?.message || 'Failed to update payment status')
+    } finally {
+      setVerifyingId(null)
     }
   }
 
@@ -257,17 +273,42 @@ const PaymentHistory = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      {payment.receiptFile || payment.receiptUrl ? (
-                        <button 
-                          onClick={() => window.open(`http://localhost:5000/${payment.receiptFile || payment.receiptUrl}`, '_blank')}
-                          className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center space-x-1"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span>View</span>
-                        </button>
-                      ) : (
-                        <span className="text-gray-400 text-sm">-</span>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        {payment.receiptFile || payment.receiptUrl ? (
+                          <button 
+                            onClick={() => window.open(`http://localhost:5000/${payment.receiptFile || payment.receiptUrl}`, '_blank')}
+                            className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center space-x-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            <span>View</span>
+                          </button>
+                        ) : null}
+                        
+                        {isAdmin && payment.status === 'pending' && (
+                          <div className="flex items-center space-x-1">
+                            <button
+                              onClick={() => handleVerifyPayment(payment._id, 'verified')}
+                              disabled={verifyingId === payment._id}
+                              className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded disabled:opacity-50"
+                              title="Verify Payment"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleVerifyPayment(payment._id, 'rejected')}
+                              disabled={verifyingId === payment._id}
+                              className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded disabled:opacity-50"
+                              title="Reject Payment"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                        
+                        {!isAdmin && !payment.receiptFile && !payment.receiptUrl && (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
