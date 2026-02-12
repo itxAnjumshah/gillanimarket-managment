@@ -18,6 +18,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const adminLinks = [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/admin/add-user', icon: Users, label: 'Add User' },
+    { to: '/admin/manage-users', icon: Users, label: 'Manage Users' },
     { to: '/admin/set-rent', icon: DollarSign, label: 'Set Monthly Rent' },
     { to: '/admin/payment-history', icon: History, label: 'Payment History' },
     { to: '/admin/reports', icon: FileText, label: 'Reports' }

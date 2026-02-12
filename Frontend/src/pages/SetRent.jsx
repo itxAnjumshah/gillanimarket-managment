@@ -20,7 +20,8 @@ const SetRent = () => {
     try {
       setFetchingUsers(true)
       const response = await userAPI.getAllUsers()
-      setUsers(response.data.data.users || [])
+      // Backend returns data directly as array, not data.users
+      setUsers(response.data.data || [])
     } catch (error) {
       console.error('Error fetching users:', error)
       setError('Failed to fetch users')

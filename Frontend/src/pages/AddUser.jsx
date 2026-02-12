@@ -25,7 +25,9 @@ const AddUser = () => {
   const fetchRecentUsers = async () => {
     try {
       const response = await userAPI.getAllUsers({ limit: 3 })
-      setRecentUsers(response.data.data.users || [])
+      // Backend returns data directly as array, not data.users
+      const users = response.data.data || []
+      setRecentUsers(users.slice(0, 3))
     } catch (error) {
       console.error('Error fetching users:', error)
     }
@@ -328,7 +330,15 @@ const AddUser = () => {
 
       {/* Existing Users */}
       <div className="card p-6 mt-6">
-        <h3 className="text-lg font-semibold mb-4">Recent Users</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Recent Users</h3>
+          <a
+            href="/admin/manage-users"
+            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+          >
+            View All →
+          </a>
+        </div>
         <div className="space-y-3">
           {recentUsers.length === 0 ? (
             <p className="text-center text-gray-500 py-4">No users yet</p>
@@ -344,9 +354,18 @@ const AddUser = () => {
                     {user.shopName} • {user.email}
                   </p>
                 </div>
-                <span className="text-sm font-semibold">
-                  ${user.monthlyRent}/mo
-                </span>
+                <div className="text-right">
+                  <span className="text-sm font-semibold block">
+                    ${user.monthlyRent || 0}/mo
+                  </span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    user.status === 'active'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+                  }`}>
+                    {user.status}
+                  </span>
+                </div>
               </div>
             ))
           )}

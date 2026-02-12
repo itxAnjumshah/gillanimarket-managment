@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import AdminDashboard from './pages/AdminDashboard'
 import UserDashboard from './pages/UserDashboard'
 import AddUser from './pages/AddUser'
+import ManageUsers from './pages/ManageUsers'
 import SetRent from './pages/SetRent'
 import PaymentHistory from './pages/PaymentHistory'
 import UploadReceipt from './pages/UploadReceipt'
@@ -24,6 +25,7 @@ function App() {
             <Route path="/admin" element={<PrivateRoute allowedRoles={['admin']} />}>
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="add-user" element={<AddUser />} />
+              <Route path="manage-users" element={<ManageUsers />} />
               <Route path="set-rent" element={<SetRent />} />
               <Route path="reports" element={<Reports />} />
               <Route path="payment-history" element={<PaymentHistory />} />

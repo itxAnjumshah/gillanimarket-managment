@@ -46,7 +46,8 @@ const Reports = () => {
 
       setStats(paymentStatsRes.data.data)
       setPayments(paymentsRes.data.data.payments || [])
-      setUsers(usersRes.data.data.users || [])
+      // Backend returns data directly as array, not data.users
+      setUsers(usersRes.data.data || [])
     } catch (error) {
       console.error('Error fetching report data:', error)
     } finally {
