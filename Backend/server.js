@@ -45,14 +45,14 @@ app.use('/uploads', express.static('uploads'));
 // ROUTES
 // ============================================
 
-// Root/welcome route
-app.use('/', indexRoutes);
-
 // Mount API routes
 app.use('/api/auth', authRoutes);         // Authentication routes
 app.use('/api/users', userRoutes);        // User management routes
 app.use('/api/rent', rentRoutes);         // Rent management routes
 app.use('/api/payments', paymentRoutes);  // Payment management routes
+
+// Root/welcome route (must be after API routes)
+app.use('/', indexRoutes);
 
 // ============================================
 // ERROR HANDLING
