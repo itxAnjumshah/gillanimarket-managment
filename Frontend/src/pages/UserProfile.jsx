@@ -47,7 +47,8 @@ const UserProfile = () => {
       setLoading(true)
       const userId = user?.id || user?._id
       const response = await paymentAPI.getPaymentsByUser(userId)
-      setPayments(response.data.data.payments || [])
+      console.log('User Payments Response:', response.data)
+      setPayments(response.data.data || [])
     } catch (error) {
       console.error('Error fetching payments:', error)
     } finally {

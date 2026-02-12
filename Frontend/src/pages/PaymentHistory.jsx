@@ -30,11 +30,12 @@ const PaymentHistory = () => {
       if (isAdmin) {
         response = await paymentAPI.getAllPayments(params)
       } else {
-        response = await paymentAPI.getPaymentsByUser(user?.id)
+        response = await paymentAPI.getPaymentsByUser(user?.id || user?._id)
       }
 
-      setPayments(response.data.data.payments || [])
-      setTotalPayments(response.data.data.total || 0)
+      console.log('Payment Response:', response.data)
+      setPayments(response.data.data || [])
+      setTotalPayments(response.data.count || 0)
     } catch (error) {
       console.error('Error fetching payments:', error)
     } finally {
@@ -67,10 +68,12 @@ const PaymentHistory = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'paid':
+      case 'verified':
         return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
       case 'pending':
         return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
       case 'overdue':
+      case 'rejected':
         return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
       default:
         return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-400'
@@ -143,7 +146,9 @@ const PaymentHistory = () => {
               >
                 <option value="all">All Status</option>
                 <option value="paid">Paid</option>
+                <option value="verified">Verified</option>
                 <option value="pending">Pending</option>
+                <option value="rejected">Rejected</option>
                 <option value="overdue">Overdue</option>
               </select>
             </div>
@@ -229,16 +234,22 @@ const PaymentHistory = () => {
                       </td>
                     )}
                     <td className="py-3 px-4">
-                      {payment.month || `${new Date(payment.createdAt).toLocaleString('default', { month: 'long' })} ${new Date(payment.createdAt).getFullYear()}`}
+                      <div className="font-medium">
+                        {payment.month || `${new Date(payment.createdAt).toLocaleString('default', { month: 'long' })} ${new Date(payment.createdAt).getFullYear()}`}
+                      </div>
                     </td>
                     <td className="py-3 px-4 font-semibold">
                       {formatCurrency(payment.amount)}
                     </td>
                     <td className="py-3 px-4 text-sm">
-                      {payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString() : '-'}
+                      {new Date(payment.paymentDate || payment.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
                     </td>
                     <td className="py-3 px-4">
-                      {getMethodBadge(payment.method)}
+                      {getMethodBadge(payment.paymentMethod || payment.method)}
                     </td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
@@ -246,9 +257,9 @@ const PaymentHistory = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      {payment.receiptUrl ? (
+                      {payment.receiptFile || payment.receiptUrl ? (
                         <button 
-                          onClick={() => window.open(payment.receiptUrl, '_blank')}
+                          onClick={() => window.open(`http://localhost:5000/${payment.receiptFile || payment.receiptUrl}`, '_blank')}
                           className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center space-x-1"
                         >
                           <Eye className="w-4 h-4" />

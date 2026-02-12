@@ -26,8 +26,10 @@ const UserDashboard = () => {
   const fetchPayments = async () => {
     try {
       setLoading(true)
-      const response = await paymentAPI.getPaymentsByUser(user.id)
-      setPayments(response.data.data.payments || [])
+      const userId = user?.id || user?._id
+      const response = await paymentAPI.getPaymentsByUser(userId)
+      console.log('User Dashboard Payments:', response.data)
+      setPayments(response.data.data || [])
     } catch (error) {
       console.error('Error fetching payments:', error)
     } finally {
