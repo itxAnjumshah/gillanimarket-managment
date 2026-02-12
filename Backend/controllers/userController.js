@@ -208,3 +208,126 @@ exports.deleteUser = async (req, res) => {
     });
   }
 };
+
+/**
+ * @route   GET /api/users/master
+ * @desc    Get complete master data of all users with payments
+ * @access  Private/Admin
+ */
+exports.getMasterData = async (req, res) => {
+  try {
+    const Payment = require('../models/Payment');
+    
+    // Get all users except admins
+    const users = await User.find({ role: { $ne: 'admin' } }).select('-password');
+
+    // Get all payments and populate user data
+    const allPayments = await Payment.find().populate('user', 'name email shopName');
+
+    // Build comprehensive data for each user
+    const masterData = await Promise.all(users.map(async (user) => {
+      // Get user's payments
+      const userPayments = await Payment.find({ user: user._id }).sort({ createdAt: -1 });
+
+      // Calculate totals
+      const totalPaid = userPayments
+        .filter(p => p.status === 'paid' || p.status === 'verified')
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const totalPending = userPayments
+        .filter(p => p.status === 'pending')
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const totalRejected = userPayments
+        .filter(p => p.status === 'rejected')
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      // Calculate dues (simplified - can be enhanced)
+      const monthsPassed = Math.floor((Date.now() - new Date(user.createdAt)) / (1000 * 60 * 60 * 24 * 30));
+      const totalDue = (user.monthlyRent || 0) * Math.max(monthsPassed, 1);
+      const balance = totalDue - totalPaid;
+
+      return {
+        // User Information
+        userId: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        shopName: user.shopName,
+        role: user.role,
+        status: user.status,
+        
+        // Financial Information
+        monthlyRent: user.monthlyRent,
+        dueDate: user.dueDate,
+        totalPaid,
+        totalPending,
+        totalRejected,
+        totalDue,
+        balance,
+        
+        // Account Information
+        accountCreated: user.createdAt,
+        lastUpdated: user.updatedAt,
+        
+        // Payment Records
+        totalPayments: userPayments.length,
+        verifiedPayments: userPayments.filter(p => p.status === 'verified' || p.status === 'paid').length,
+        pendingPayments: userPayments.filter(p => p.status === 'pending').length,
+        rejectedPayments: userPayments.filter(p => p.status === 'rejected').length,
+        
+        // Recent Payment History (last 5)
+        recentPayments: userPayments.slice(0, 5).map(payment => ({
+          paymentId: payment._id,
+          month: payment.month,
+          amount: payment.amount,
+          status: payment.status,
+          method: payment.paymentMethod,
+          date: payment.paymentDate || payment.createdAt,
+          receiptFile: payment.receiptFile,
+          notes: payment.notes
+        })),
+        
+        // All Payments (complete history)
+        allPayments: userPayments.map(payment => ({
+          paymentId: payment._id,
+          month: payment.month,
+          amount: payment.amount,
+          status: payment.status,
+          method: payment.paymentMethod,
+          date: payment.paymentDate || payment.createdAt,
+          receiptFile: payment.receiptFile,
+          notes: payment.notes,
+          verifiedBy: payment.verifiedBy,
+          verifiedAt: payment.verifiedAt
+        }))
+      };
+    }));
+
+    // Summary statistics
+    const summary = {
+      totalUsers: masterData.length,
+      activeUsers: masterData.filter(u => u.status === 'active').length,
+      inactiveUsers: masterData.filter(u => u.status === 'inactive').length,
+      totalRentCollected: masterData.reduce((sum, u) => sum + u.totalPaid, 0),
+      totalPendingAmount: masterData.reduce((sum, u) => sum + u.totalPending, 0),
+      totalOutstandingBalance: masterData.reduce((sum, u) => sum + Math.max(u.balance, 0), 0),
+      totalPayments: allPayments.length,
+      verifiedPayments: allPayments.filter(p => p.status === 'verified' || p.status === 'paid').length,
+      pendingPayments: allPayments.filter(p => p.status === 'pending').length,
+      rejectedPayments: allPayments.filter(p => p.status === 'rejected').length
+    };
+
+    res.status(200).json({
+      success: true,
+      message: 'Master data retrieved successfully',
+      summary,
+      data: masterData
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};

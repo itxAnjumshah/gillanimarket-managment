@@ -13,12 +13,16 @@ const {
   getUser,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  getMasterData
 } = require('../controllers/userController');
 
 /**
  * All routes require authentication and admin role
  */
+
+// Master data route - must be before /:id to avoid conflict
+router.get('/master', protect, authorize('admin'), getMasterData);
 
 router.route('/')
   .get(protect, authorize('admin'), getAllUsers)     // Get all users
