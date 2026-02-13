@@ -64,7 +64,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                <Store className="w-5 h-5 text-white" />
                 {/* <DollarSign className="w-5 h-5 text-white" /> */}
               </div>
-              <span className="font-semibold text-lg">Gilani Market</span>
+              <span className="font-semibold text-lg">Gillani Market</span>
             </div>
             <button
               onClick={onClose}
@@ -118,7 +118,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           {/* Footer */}
           <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800">
             <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-              © 2025 ShopRent Management
+              © 2026 GillaniMarket.
             </p>
           </div>
         </div>
