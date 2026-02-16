@@ -13,6 +13,7 @@ import {
   BarChart3,
   Store
 } from 'lucide-react'
+import logo from '../../Assets/logo.png'
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { user, isAdmin } = useAuth()
@@ -60,8 +61,9 @@ const Sidebar = ({ isOpen, onClose }) => {
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-               <Store className="w-5 h-5 text-white" />
+              <div className="">
+                <img src={logo} alt="Logo" className="w-[80px] h-[50px] rounded-md" />
+               {/* <Store className="w-5 h-5 text-white" /> */}
                 {/* <DollarSign className="w-5 h-5 text-white" /> */}
               </div>
               <span className="font-semibold text-lg">Gillani Market</span>
