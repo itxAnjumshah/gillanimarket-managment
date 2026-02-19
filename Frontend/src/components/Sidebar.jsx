@@ -1,5 +1,5 @@
-import { Link, useLocation } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
   LayoutDashboard,
   Users,
@@ -11,35 +11,36 @@ import {
   X,
   User,
   BarChart3,
-  Store
-} from 'lucide-react'
-import logo from '../../Assets/logo.png'
+  Store,
+} from "lucide-react";
+import logo from "../../Assets/logo.png";
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { user, isAdmin } = useAuth()
-  const location = useLocation()
+  const { user, isAdmin } = useAuth();
+  const location = useLocation();
 
   const adminLinks = [
-    { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/admin/add-user', icon: Users, label: 'Add User' },
-    { to: '/admin/manage-users', icon: Users, label: 'Manage Users' },
-    { to: '/admin/set-rent', icon: DollarSign, label: 'Set Monthly Rent' },
-    { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
-    { to: '/admin/payment-history', icon: History, label: 'Payment History' },
-    { to: '/admin/reports', icon: FileText, label: 'Reports' }
-  ]
+    { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  
+    { to: "/admin/add-user", icon: Users, label: "Add User" },
+    { to: "/admin/manage-users", icon: Users, label: "Manage Users" },
+    { to: "/admin/set-rent", icon: DollarSign, label: "Set Monthly Rent" },
+    { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
+    { to: "/admin/payment-history", icon: History, label: "Payment History" },
+    { to: "/admin/reports", icon: FileText, label: "Reports" },
+  ];
 
   const userLinks = [
-    { to: '/user/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/user/profile', icon: User, label: 'My Profile' },
-    { to: '/user/bill', icon: Receipt, label: 'View Bill' },
-    { to: '/user/upload-receipt', icon: Upload, label: 'Upload Receipt' },
-    { to: '/user/payment-history', icon: History, label: 'Payment History' }
-  ]
+    { to: "/user/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/user/profile", icon: User, label: "My Profile" },
+    { to: "/user/bill", icon: Receipt, label: "View Bill" },
+    { to: "/user/upload-receipt", icon: Upload, label: "Upload Receipt" },
+    { to: "/user/payment-history", icon: History, label: "Payment History" },
+  ];
 
-  const links = isAdmin ? adminLinks : userLinks
+  const links = isAdmin ? adminLinks : userLinks;
 
-  const isActive = (path) => location.pathname === path
+  const isActive = (path) => location.pathname === path;
 
   return (
     <>
@@ -54,7 +55,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Sidebar */}
       <div
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          isOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
       >
         <div className="flex flex-col h-full">
@@ -62,8 +63,12 @@ const Sidebar = ({ isOpen, onClose }) => {
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center space-x-3">
               <div className="">
-                <img src={logo} alt="Logo" className="w-[80px] h-[50px] rounded-md" />
-               {/* <Store className="w-5 h-5 text-white" /> */}
+                <img
+                  src={logo}
+                  alt="Logo"
+                  className="w-[80px] h-[50px] rounded-md"
+                />
+                {/* <Store className="w-5 h-5 text-white" /> */}
                 {/* <DollarSign className="w-5 h-5 text-white" /> */}
               </div>
               <span className="font-semibold text-lg">Gillani Market</span>
@@ -96,8 +101,8 @@ const Sidebar = ({ isOpen, onClose }) => {
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
             {links.map((link) => {
-              const Icon = link.icon
-              const active = isActive(link.to)
+              const Icon = link.icon;
+              const active = isActive(link.to);
 
               return (
                 <Link
@@ -106,14 +111,14 @@ const Sidebar = ({ isOpen, onClose }) => {
                   onClick={onClose}
                   className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                     active
-                      ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                   }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{link.label}</span>
                 </Link>
-              )
+              );
             })}
           </nav>
 
@@ -126,7 +131,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;

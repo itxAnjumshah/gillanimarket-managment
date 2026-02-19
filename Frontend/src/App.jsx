@@ -32,6 +32,8 @@ function App() {
               <Route path="analytics" element={<Analytics />} />
               <Route path="reports" element={<Reports />} />
               <Route path="payment-history" element={<PaymentHistory />} />
+             
+
             </Route>
 
             {/* User Routes */}
