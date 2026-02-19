@@ -198,7 +198,7 @@ const SetRent = () => {
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <p className="text-gray-600 dark:text-gray-400">Email</p>
-                      <p className="font-medium">{selectedUser.email}</p>
+                      <p className="font-medium ">{selectedUser.email}</p>
                     </div>
                     <div>
                       <p className="text-gray-600 dark:text-gray-400">Phone</p>
