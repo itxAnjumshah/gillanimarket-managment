@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -10,15 +10,9 @@ const Login = () => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const { login, user } = useAuth()
+  const { login } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
-
-  useEffect(() => {
-    if (user) {
-      navigate(user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard')
-    }
-  }, [user, navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -33,7 +27,7 @@ const Login = () => {
     const result = await login(email, password)
 
     if (result.success) {
-      // Navigation handled by useEffect
+      navigate(result.user?.role === 'admin' ? '/admin/dashboard' : '/user/dashboard')
     } else {
       setError(result.error || 'Login failed')
     }

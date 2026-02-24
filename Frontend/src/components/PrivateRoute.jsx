@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext'
 import Layout from './Layout'
 
 const PrivateRoute = ({ allowedRoles }) => {
-  const { user, loading } = useAuth()
+  const { loading, getUserForRoles } = useAuth()
+  const routeUser = getUserForRoles(allowedRoles)
 
   if (loading) {
     return (
@@ -13,11 +14,11 @@ const PrivateRoute = ({ allowedRoles }) => {
     )
   }
 
-  if (!user) {
+  if (!routeUser) {
     return <Navigate to="/login" replace />
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  if (allowedRoles && !allowedRoles.includes(routeUser.role)) {
     return <Navigate to="/login" replace />
   }
 

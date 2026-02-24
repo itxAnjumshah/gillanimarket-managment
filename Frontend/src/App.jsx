@@ -17,9 +17,9 @@ import Analytics from './pages/Analytics'
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <ThemeProvider>
+        <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
 
@@ -48,9 +48,9 @@ function App() {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
-        </Router>
-      </AuthProvider>
-    </ThemeProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </Router>
   )
 }
 

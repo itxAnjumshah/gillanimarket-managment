@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { Search, Download, Eye, Filter, CheckCircle, XCircle } from 'lucide-react'
+import { Search, Download, Eye, Filter, CheckCircle, XCircle, Trash2 } from 'lucide-react'
 import { paymentAPI } from '../utils/api'
 
 const PaymentHistory = () => {
@@ -12,6 +12,7 @@ const PaymentHistory = () => {
   const [totalPayments, setTotalPayments] = useState(0)
   const [loading, setLoading] = useState(true)
   const [verifyingId, setVerifyingId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
   const itemsPerPage = 10
 
   useEffect(() => {
@@ -56,6 +57,23 @@ const PaymentHistory = () => {
       alert(error.response?.data?.message || 'Failed to update payment status')
     } finally {
       setVerifyingId(null)
+    }
+  }
+
+  const handleDeletePayment = async (paymentId) => {
+    const isConfirmed = window.confirm('Are you sure you want to delete this payment?')
+    if (!isConfirmed) return
+
+    try {
+      setDeletingId(paymentId)
+      await paymentAPI.deletePayment(paymentId)
+      await fetchPayments()
+      alert('Payment deleted successfully!')
+    } catch (error) {
+      console.error('Error deleting payment:', error)
+      alert(error.response?.data?.message || 'Failed to delete payment')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -303,6 +321,17 @@ const PaymentHistory = () => {
                               <XCircle className="w-4 h-4" />
                             </button>
                           </div>
+                        )}
+
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDeletePayment(payment._id)}
+                            disabled={deletingId === payment._id}
+                            className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded disabled:opacity-50"
+                            title="Delete Payment"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         )}
                         
                         {!isAdmin && !payment.receiptFile && !payment.receiptUrl && (
